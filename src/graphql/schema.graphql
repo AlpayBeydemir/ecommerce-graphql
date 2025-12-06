@@ -1,0 +1,304 @@
+"A datetime string with format `Y-m-d H:i:s`, e.g. `2018-05-23 13:43:32`."
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+"Indicates what fields are available at the top level of a query operation."
+type Query {
+    # Auth
+    me: User @auth
+
+    # Users
+    user(id: ID @eq): User @find @guard(with: ["api"])
+    users(name: String @where(operator: "like")): [User!]! @paginate(defaultCount: 10) @guard(with: ["api"])
+
+    # Products
+    product(id: ID @eq): Product @find
+    products(
+        name: String @where(operator: "like")
+        brand: String @where(operator: "like")
+        minPrice: Float
+        maxPrice: Float
+        inStock: Boolean
+    ): [Product!]! @paginate(defaultCount: 20)
+
+    # Product Search (will be handled by custom resolver with Elasticsearch)
+    searchProducts(
+        query: String!
+        brand: String
+        minPrice: Float
+        maxPrice: Float
+        inStock: Boolean
+        page: Int = 1
+        limit: Int = 20
+    ): ProductSearchResult! @field(resolver: "App\\GraphQL\\Queries\\SearchProducts")
+
+    # Addresses
+    address(id: ID @eq): Address @find @guard(with: ["api"])
+    myAddresses: [Address!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\MyAddresses")
+
+    # Orders
+    order(id: ID @eq): Order @find @guard(with: ["api"])
+    myOrders(status: OrderStatus): [Order!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\MyOrders")
+    orderByNumber(orderNumber: String!): Order @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\OrderByNumber")
+
+    # Payments
+    payment(id: ID @eq): Payment @find @guard(with: ["api"])
+}
+
+type Mutation {
+    # Auth
+    register(input: RegisterInput! @spread): AuthPayload! @field(resolver: "App\\GraphQL\\Mutations\\Register")
+    login(input: LoginInput! @spread): AuthPayload! @field(resolver: "App\\GraphQL\\Mutations\\Login")
+    logout: LogoutResponse! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\Logout")
+    refreshToken(input: RefreshTokenInput! @spread): RefreshTokenPayload! @field(resolver: "App\\GraphQL\\Mutations\\RefreshToken")
+
+    # User Profile
+    updateProfile(input: UpdateProfileInput! @spread): User! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\UpdateProfile")
+
+    # Addresses
+    createAddress(input: CreateAddressInput! @spread): Address! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\CreateAddress")
+    updateAddress(id: ID!, input: UpdateAddressInput! @spread): Address! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\UpdateAddress")
+    deleteAddress(id: ID!): DeleteResponse! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\DeleteAddress")
+    setDefaultAddress(id: ID!): Address! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\SetDefaultAddress")
+
+    # Products (Admin only - you can add @can directive later)
+    createProduct(input: CreateProductInput! @spread): Product! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\CreateProduct")
+    updateProduct(id: ID!, input: UpdateProductInput! @spread): Product! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\UpdateProduct")
+    deleteProduct(id: ID!): DeleteResponse! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\DeleteProduct")
+
+    # Checkout - Buy Now Flow
+    buyNow(input: BuyNowInput! @spread): Order! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\BuyNow")
+
+    # Payment
+    processPayment(input: ProcessPaymentInput! @spread): Payment! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\ProcessPayment")
+
+    # Order Management
+    cancelOrder(orderId: ID!): Order! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\CancelOrder")
+}
+
+# ====================
+# Types
+# ====================
+
+type User {
+    id: ID!
+    name: String!
+    email: String!
+    email_verified_at: DateTime
+    addresses: [Address!]! @hasMany
+    orders: [Order!]! @hasMany
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+type Product {
+    id: ID!
+    name: String!
+    description: String
+    sku: String!
+    price: Float!
+    stock_quantity: Int!
+    brand: String
+    image_url: String
+    is_active: Boolean!
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+type Address {
+    id: ID!
+    user_id: ID!
+    user: User! @belongsTo
+    title: String
+    full_name: String!
+    phone: String!
+    address_line_1: String!
+    address_line_2: String
+    city: String!
+    state: String
+    postal_code: String!
+    country: String!
+    is_default: Boolean!
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+type Order {
+    id: ID!
+    order_number: String!
+    user_id: ID!
+    user: User! @belongsTo
+    address_id: ID
+    address: Address @belongsTo
+    status: OrderStatus!
+    subtotal: Float!
+    tax: Float!
+    total: Float!
+    notes: String
+    items: [OrderItem!]! @hasMany
+    payment: Payment @hasOne
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+type OrderItem {
+    id: ID!
+    order_id: ID!
+    product_id: ID!
+    product: Product! @belongsTo
+    product_name: String!
+    price: Float!
+    quantity: Int!
+    subtotal: Float!
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+type Payment {
+    id: ID!
+    order_id: ID!
+    order: Order! @belongsTo
+    transaction_id: String!
+    payment_method: String!
+    status: PaymentStatus!
+    amount: Float!
+    currency: String!
+    paid_at: DateTime
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+type ProductSearchResult {
+    data: [Product!]!
+    total: Int!
+    page: Int!
+    limit: Int!
+}
+
+type AuthPayload {
+    access_token: String!
+    token_type: String!
+    expires_in: Int!
+    refresh_token: String!
+    user: User!
+}
+
+type RefreshTokenPayload {
+    access_token: String!
+    token_type: String!
+    expires_in: Int!
+    refresh_token: String!
+}
+
+type LogoutResponse {
+    message: String!
+    status: String!
+}
+
+type DeleteResponse {
+    message: String!
+    success: Boolean!
+}
+
+# ====================
+# Enums
+# ====================
+
+enum OrderStatus {
+    PENDING @enum(value: "pending")
+    PROCESSING @enum(value: "processing")
+    COMPLETED @enum(value: "completed")
+    CANCELLED @enum(value: "cancelled")
+    FAILED @enum(value: "failed")
+}
+
+enum PaymentStatus {
+    PENDING @enum(value: "pending")
+    COMPLETED @enum(value: "completed")
+    FAILED @enum(value: "failed")
+    REFUNDED @enum(value: "refunded")
+}
+
+# ====================
+# Inputs
+# ====================
+
+input RegisterInput {
+    name: String! @rules(apply: ["required", "string", "max:255"])
+    email: String! @rules(apply: ["required", "email", "unique:users,email"])
+    password: String! @rules(apply: ["required", "min:8", "confirmed"])
+    password_confirmation: String!
+}
+
+input LoginInput {
+    email: String! @rules(apply: ["required", "email"])
+    password: String! @rules(apply: ["required"])
+}
+
+input RefreshTokenInput {
+    refresh_token: String!
+}
+
+input UpdateProfileInput {
+    name: String @rules(apply: ["string", "max:255"])
+    email: String @rules(apply: ["email", "unique:users,email"])
+}
+
+input CreateAddressInput {
+    title: String
+    full_name: String! @rules(apply: ["required", "string"])
+    phone: String! @rules(apply: ["required", "string"])
+    address_line_1: String! @rules(apply: ["required", "string"])
+    address_line_2: String
+    city: String! @rules(apply: ["required", "string"])
+    state: String
+    postal_code: String! @rules(apply: ["required", "string"])
+    country: String! @rules(apply: ["required", "string"])
+    is_default: Boolean
+}
+
+input UpdateAddressInput {
+    title: String
+    full_name: String
+    phone: String
+    address_line_1: String
+    address_line_2: String
+    city: String
+    state: String
+    postal_code: String
+    country: String
+    is_default: Boolean
+}
+
+input CreateProductInput {
+    name: String! @rules(apply: ["required", "string"])
+    description: String
+    sku: String! @rules(apply: ["required", "unique:products,sku"])
+    price: Float! @rules(apply: ["required", "numeric", "min:0"])
+    stock_quantity: Int! @rules(apply: ["required", "integer", "min:0"])
+    brand: String
+    image_url: String
+    is_active: Boolean
+}
+
+input UpdateProductInput {
+    name: String
+    description: String
+    sku: String
+    price: Float
+    stock_quantity: Int
+    brand: String
+    image_url: String
+    is_active: Boolean
+}
+
+input BuyNowInput {
+    product_id: ID! @rules(apply: ["required", "exists:products,id"])
+    quantity: Int! @rules(apply: ["required", "integer", "min:1"])
+    address_id: ID! @rules(apply: ["required", "exists:addresses,id"])
+    notes: String
+}
+
+input ProcessPaymentInput {
+    order_id: ID! @rules(apply: ["required", "exists:orders,id"])
+    payment_method: String! @rules(apply: ["required", "string"])
+}
