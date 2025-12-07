@@ -15,9 +15,8 @@ class MyOrders
             throw new Error('Unauthenticated');
         }
 
-        $query = $user->orders()->with(['items.product', 'address', 'payment']);
+        $query = $user->orders()->with(['items.product', 'address']);
 
-        // Filter by status if provided
         if (isset($args['status'])) {
             $query->where('status', strtolower($args['status']));
         }

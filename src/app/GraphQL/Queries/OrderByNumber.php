@@ -18,7 +18,7 @@ class OrderByNumber
 
         $order = Order::where('order_number', $args['orderNumber'])
             ->where('user_id', $user->id)
-            ->with(['items.product', 'address', 'payment'])
+            ->with(['items.product', 'address'])
             ->first();
 
         if (!$order) {

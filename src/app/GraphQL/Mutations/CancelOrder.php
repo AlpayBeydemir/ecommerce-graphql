@@ -24,8 +24,7 @@ class CancelOrder
             throw new Error('Unauthenticated');
         }
 
-        // Find order and verify ownership
-        $order = Order::where('id', $args['orderId'])
+        $order = Order::where('order_number', $args['orderId'])
             ->where('user_id', $user->id)
             ->first();
 
@@ -33,12 +32,6 @@ class CancelOrder
             throw new Error('Order not found or does not belong to you');
         }
 
-        // Cancel order using service
-        $cancelledOrder = $this->checkoutService->cancelOrder($order);
-
-        // TODO: Dispatch job to send cancellation email
-        // dispatch(new SendOrderCancellationEmail($cancelledOrder));
-
-        return $cancelledOrder;
+        return $this->checkoutService->cancelOrder($order);
     }
 }
