@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('sku')->unique();
+            $table->string('category')->default('general');
             $table->decimal('price', 10, 2);
             $table->integer('stock_quantity')->default(0);
             $table->string('brand')->nullable();

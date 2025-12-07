@@ -15,6 +15,9 @@ class BuyNow
         $this->checkoutService = $checkoutService;
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke($rootValue, array $args)
     {
         $user = Auth::user();
@@ -23,17 +26,12 @@ class BuyNow
             throw new Error('Unauthenticated');
         }
 
-        $order = $this->checkoutService->processBuyNow(
+        return $this->checkoutService->processBuyNow(
             userId: $user->id,
             productId: $args['product_id'],
             quantity: $args['quantity'],
             addressId: $args['address_id'],
-            notes: $args['notes'] ?? null
+            notes: $args['notes'] ?? null,
         );
-
-        // TODO: Dispatch job to send order confirmation email
-        // dispatch(new SendOrderConfirmation($order));
-
-        return $order;
     }
 }

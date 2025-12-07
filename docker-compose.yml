@@ -42,6 +42,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-secret}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redispassword}
       - QUEUE_CONNECTION=redis
       - CACHE_DRIVER=redis
       - SESSION_DRIVER=redis
@@ -79,6 +80,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-secret}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redispassword}
       - QUEUE_CONNECTION=redis
       - CACHE_DRIVER=redis
       - ELASTICSEARCH_HOST=elasticsearch:9200
@@ -107,7 +109,7 @@ services:
       - POSTGRES_USER=${DB_USERNAME:-ecommerce_user}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-secret}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:

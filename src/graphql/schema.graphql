@@ -95,6 +95,7 @@ type Product {
     name: String!
     description: String
     sku: String!
+    category: String!
     price: Float!
     stock_quantity: Int!
     brand: String
@@ -273,6 +274,7 @@ input CreateProductInput {
     name: String! @rules(apply: ["required", "string"])
     description: String
     sku: String! @rules(apply: ["required", "unique:products,sku"])
+    category: String
     price: Float! @rules(apply: ["required", "numeric", "min:0"])
     stock_quantity: Int! @rules(apply: ["required", "integer", "min:0"])
     brand: String
@@ -284,6 +286,7 @@ input UpdateProductInput {
     name: String
     description: String
     sku: String
+    category: String
     price: Float
     stock_quantity: Int
     brand: String

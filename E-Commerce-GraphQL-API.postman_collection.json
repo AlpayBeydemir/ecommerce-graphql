@@ -133,7 +133,7 @@
 						"body": {
 							"mode": "graphql",
 							"graphql": {
-								"query": "query ListProducts($first: Int!, $page: Int) {\n  products(first: $first, page: $page) {\n    data {\n      id\n      name\n      description\n      sku\n      price\n      stock_quantity\n      brand\n      is_active\n    }\n    paginatorInfo {\n      total\n      currentPage\n      lastPage\n      perPage\n    }\n  }\n}",
+								"query": "query ListProducts($first: Int!, $page: Int) {\n  products(first: $first, page: $page) {\n    data {\n      id\n      name\n      description\n      sku\n    category\n    price\n      stock_quantity\n      brand\n      is_active\n    }\n    paginatorInfo {\n      total\n      currentPage\n      lastPage\n      perPage\n    }\n  }\n}",
 								"variables": "{\n  \"first\": 10,\n  \"page\": 1\n}"
 							}
 						},
@@ -161,8 +161,84 @@
 						"body": {
 							"mode": "graphql",
 							"graphql": {
-								"query": "query GetProduct($id: ID!) {\n  product(id: $id) {\n    id\n    name\n    description\n    sku\n    price\n    stock_quantity\n    brand\n    image_url\n    is_active\n    created_at\n    updated_at\n  }\n}",
+								"query": "query GetProduct($id: ID!) {\n  product(id: $id) {\n    id\n    name\n    description\n    sku\n    category\n    price\n    stock_quantity\n    brand\n    image_url\n    is_active\n    created_at\n    updated_at\n  }\n}",
 								"variables": "{\n  \"id\": \"1\"\n}"
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/graphql",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"graphql"
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "graphql",
+							"graphql": {
+								"query": "mutation CreateProduct($input: CreateProductInput!) {\n  createProduct(input: $input) {\n    id\n    name\n    description\n    sku\n    category\n    price\n    stock_quantity\n    brand\n    image_url\n    is_active\n    created_at\n    updated_at\n  }\n}",
+								"variables": "{\n  \"input\": {\n    \"name\": \"iPhone 15 Pro\",\n    \"description\": \"Latest iPhone with advanced features\",\n    \"sku\": \"IPHONE-15-PRO-001\",\n    \"price\": 999.99,\n    \"stock_quantity\": 50,\n    \"brand\": \"Apple\",\n    \"image_url\": \"https://example.com/iphone15pro.jpg\",\n    \"is_active\": true\n  }\n}"
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/graphql",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"graphql"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "graphql",
+							"graphql": {
+								"query": "mutation UpdateProduct($id: ID!, $input: UpdateProductInput!) {\n  updateProduct(id: $id, input: $input) {\n    id\n    name\n    description\n    sku\n    category\n    price\n    stock_quantity\n    brand\n    image_url\n    is_active\n    created_at\n    updated_at\n  }\n}",
+								"variables": "{\n  \"id\": \"1\",\n  \"input\": {\n    \"name\": \"iPhone 15 Pro Max\",\n    \"price\": 1199.99,\n    \"stock_quantity\": 30\n  }\n}"
 							}
 						},
 						"url": {
@@ -189,7 +265,7 @@
 						"body": {
 							"mode": "graphql",
 							"graphql": {
-								"query": "query SearchProducts($query: String!, $brand: String, $minPrice: Float, $maxPrice: Float, $inStock: Boolean, $page: Int, $limit: Int) {\n  searchProducts(\n    query: $query\n    brand: $brand\n    minPrice: $minPrice\n    maxPrice: $maxPrice\n    inStock: $inStock\n    page: $page\n    limit: $limit\n  ) {\n    data {\n      id\n      name\n      price\n      stock_quantity\n      brand\n    }\n    total\n    page\n    limit\n  }\n}",
+								"query": "query SearchProducts($query: String!, $brand: String, $minPrice: Float, $maxPrice: Float, $inStock: Boolean, $page: Int, $limit: Int) {\n  searchProducts(\n    query: $query\n    brand: $brand\n    minPrice: $minPrice\n    maxPrice: $maxPrice\n    inStock: $inStock\n    page: $page\n    limit: $limit\n  ) {\n    data {\n      id\n      name\n      category\n      price\n      stock_quantity\n      brand\n    }\n    total\n    page\n    limit\n  }\n}",
 								"variables": "{\n  \"query\": \"iPhone\",\n  \"inStock\": true,\n  \"page\": 1,\n  \"limit\": 20\n}"
 							}
 						},

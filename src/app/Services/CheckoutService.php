@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\OrderStatus;
+use App\Events\OrderCreated;
 use App\Models\Product;
 use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Address;
 use Illuminate\Support\Facades\DB;
 use GraphQL\Error\Error;
+use Illuminate\Support\Str;
 
 class CheckoutService
 {
@@ -22,64 +23,84 @@ class CheckoutService
      * @return Order
      * @throws Error
      */
-    public function processBuyNow(int $userId, int $productId, int $quantity, int $addressId, ?string $notes = null): Order
-    {
-        return DB::transaction(function () use ($userId, $productId, $quantity, $addressId, $notes) {
-            // 1. Validate product exists and is active
-            $product = Product::where('id', $productId)
-                ->where('is_active', true)
-                ->lockForUpdate() // Lock for race condition prevention
-                ->first();
+    public function processBuyNow(
+        int $userId,
+        int $productId,
+        int $quantity,
+        int $addressId,
+        ?string $notes
+    ): Order {
 
-            if (!$product) {
-                throw new Error('Product not found or not available');
-            }
+        return DB::transaction(function () use (
+            $userId,
+            $productId,
+            $quantity,
+            $addressId,
+            $notes
+        ) {
 
-            // 2. Check stock availability
-            if ($product->stock_quantity < $quantity) {
-                throw new Error('Insufficient stock. Available: ' . $product->stock_quantity);
-            }
+            $product = Product::findOrFail($productId);
 
-            // 3. Validate address belongs to user
-            $address = Address::where('id', $addressId)
-                ->where('user_id', $userId)
-                ->first();
-
-            if (!$address) {
-                throw new Error('Address not found or does not belong to you');
-            }
-
-            // 4. Calculate pricing
-            $price = $product->price;
-            $subtotal = $price * $quantity;
-            $tax = $subtotal * 0.18; // 18% KDV
+            $subtotal = $product->price * $quantity;
+            $tax = $subtotal * 0.20; // örnek KDV
             $total = $subtotal + $tax;
 
-            // 5. Create order
             $order = Order::create([
+                'order_number' => Str::uuid(),
                 'user_id' => $userId,
                 'address_id' => $addressId,
-                'status' => 'pending',
+                'status' => OrderStatus::PENDING->value,
                 'subtotal' => $subtotal,
                 'tax' => $tax,
                 'total' => $total,
                 'notes' => $notes,
             ]);
 
-            // 6. Create order item (snapshot of product at purchase time)
-            OrderItem::create([
-                'order_id' => $order->id,
+            $order->items()->create([
                 'product_id' => $product->id,
                 'product_name' => $product->name,
-                'price' => $price,
+                'price' => $product->price,
                 'quantity' => $quantity,
                 'subtotal' => $subtotal,
             ]);
 
-            // 7. Reserve stock (decrement)
-            $product->decrement('stock_quantity', $quantity);
+            OrderCreated::dispatch($order);
+            return $order;
+        });
+    }
 
-            return $order->load(['items', 'address', 'user']);
+    /**
+     * Payment success callback
+     * Uygulamada webhook / event consumer çalıştırır
+     */
+    public function finalizePayment(Order $order): void
+    {
+        DB::transaction(function () use ($order) {
+            $order->update([
+                'status' => 'paid'
+            ]);
+
+            event(new \App\Events\OrderPaid($order));
+        });
+    }
+
+    /**
+     * Payment failure compensation
+     */
+    public function rollbackStockAndFail(Order $order): void
+    {
+        DB::transaction(function () use ($order) {
+
+            foreach ($order->items as $item) {
+                Product::where('id', $item->product_id)
+                    ->increment('stock_quantity', $item->quantity);
+            }
+
+            $order->update([
+                'status' => 'payment_failed'
+            ]);
+
+            event(new \App\Events\OrderPaymentFailed($order));
         });
     }
 

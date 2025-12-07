@@ -30,57 +30,68 @@ Kurumsal ölçekte bir e-ticaret platformu için GraphQL tabanlı backend API. L
 
 ## 🛠️ Kurulum
 
-### 1. Projeyi Klonlayın
+Projeyi klonladıktan sonra tek komutla kurulum yapabilirsiniz:
 
 ```bash
 git clone <repository-url>
-cd example-ecommerce
+cd ecommerce-graphql
+chmod +x setup.sh
+./setup.sh
 ```
 
-### 2. Environment Dosyasını Oluşturun
+Bu script otomatik olarak:
+- `.env` dosyasını oluşturur
+- Docker container'ları build eder ve başlatır
+- Composer bağımlılıklarını kurar
+- Uygulama anahtarını oluşturur
+- Veritabanı migration'larını çalıştırır
+- Laravel Passport'u yapılandırır (OAuth keys ve personal access client)
+- Test verilerini yükler
+- Konfigürasyonu optimize eder
+
+### Manuel Kurulum
+
+Adım adım manuel kurulum yapmak isterseniz:
+
+#### 1. Projeyi Klonlayın
+
+```bash
+git clone <repository-url>
+cd ecommerce-graphql
+```
+
+#### 2. Environment Dosyasını Oluşturun
 
 ```bash
 cp .env.example src/.env
 ```
 
-### 3. Docker Konteynerlerini Başlatın
+#### 3. Docker Konteynerlerini Başlatın
 
 ```bash
-docker-compose up -d
+docker-compose up -d --build
 ```
 
-### 4. Bağımlılıkları Kurun
+**Not**: Docker container'ı ilk başlatıldığında `docker-entrypoint.sh` script'i otomatik olarak çalışır ve aşağıdaki işlemleri yapar:
+- Database bağlantısını bekler
+- Migration'ları çalıştırır
+- Passport keys'leri oluşturur
+- Personal access client'ı oluşturur
+- Seed verilerini yükler (development ortamında)
+- Konfigürasyonu cache'ler
 
-```bash
-docker-compose exec php composer install
-```
+#### 4. (Opsiyonel) Manuel Passport Kurulumu
 
-### 5. Uygulama Anahtarını Oluşturun
-
-```bash
-docker-compose exec php php artisan key:generate
-```
-
-### 6. Veritabanı Migration'larını Çalıştırın
-
-```bash
-docker-compose exec php php artisan migrate
-```
-
-### 7. Passport Keys Oluşturun
+Eğer Passport client'ı oluşturulmamışsa manuel olarak oluşturabilirsiniz:
 
 ```bash
 docker-compose exec php php artisan passport:keys
 docker-compose exec php php artisan passport:client --personal
+# veya seeder ile:
+docker-compose exec php php artisan db:seed --class=PassportClientSeeder
 ```
 
-### 8. Seed Verilerini Yükleyin
-
-```bash
-docker-compose exec php php artisan db:seed
-```
-
-### 9. Elasticsearch Index'ini Oluşturun
+#### 5. (Opsiyonel) Elasticsearch Index'ini Oluşturun
 
 ```bash
 docker-compose exec php php artisan tinker
@@ -409,6 +420,20 @@ docker-compose exec php php artisan queue:work
 
 ## 🐛 Sorun Giderme
 
+### Passport Authentication Hatası
+Eğer login sırasında "Personal access client not found" hatası alıyorsanız:
+
+```bash
+# Passport keys'leri oluşturun
+docker-compose exec php php artisan passport:keys
+
+# Personal access client oluşturun
+docker-compose exec php php artisan passport:client --personal
+
+# Veya seeder kullanın
+docker-compose exec php php artisan db:seed --class=PassportClientSeeder
+```
+
 ### Port Çakışması
 Eğer 8080, 5432, 6379 veya 9200 portları kullanımdaysa, `docker-compose.yml` dosyasında portları değiştirin.
 
@@ -429,6 +454,20 @@ Migration hataları için:
 ```bash
 # Migration'ları sıfırlayın
 docker-compose exec php php artisan migrate:fresh --seed
+```
+
+### Container Başlatma Sorunları
+Eğer container'lar düzgün başlamıyorsa:
+
+```bash
+# Container'ları durdurup temizleyin
+docker-compose down
+
+# Yeniden build edip başlatın
+docker-compose up -d --build
+
+# Container loglarını kontrol edin
+docker-compose logs -f php
 ```
 
 ## 📝 Notlar

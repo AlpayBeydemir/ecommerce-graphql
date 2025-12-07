@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use App\Events\OrderCreated;
+use App\Listeners\ReduceStock;
+
+class EventServiceProvider extends ServiceProvider
+{
+    /**
+     * The event to listener mappings for the application.
+     */
+    protected $listen = [
+        OrderCreated::class => [
+            ReduceStock::class,
+        ],
+    ];
+
+    /**
+     * Register any events for your application.
+     */
+    public function boot(): void
+    {
+        parent::boot();
+    }
+
+
+    public function shouldDiscoverEvents(): bool
+    {
+        return false;
+    }
+}

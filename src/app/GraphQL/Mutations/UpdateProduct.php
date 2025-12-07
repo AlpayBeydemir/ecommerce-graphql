@@ -20,6 +20,7 @@ class UpdateProduct
         if (isset($args['name'])) $updateData['name'] = $args['name'];
         if (isset($args['description'])) $updateData['description'] = $args['description'];
         if (isset($args['sku'])) $updateData['sku'] = $args['sku'];
+        $updateData['category'] = 'general';
         if (isset($args['price'])) $updateData['price'] = $args['price'];
         if (isset($args['stock_quantity'])) $updateData['stock_quantity'] = $args['stock_quantity'];
         if (isset($args['brand'])) $updateData['brand'] = $args['brand'];
