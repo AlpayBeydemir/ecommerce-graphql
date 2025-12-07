@@ -58,6 +58,7 @@ class ElasticsearchService
                             'analyzer' => 'turkish_analyzer',
                         ],
                         'sku' => ['type' => 'keyword'],
+                        'category' => ['type' => 'keyword'],
                         'price' => ['type' => 'float'],
                         'stock_quantity' => ['type' => 'integer'],
                         'brand' => [
@@ -95,6 +96,7 @@ class ElasticsearchService
                 'name' => $product->name,
                 'description' => $product->description,
                 'sku' => $product->sku,
+                'category' => $product->category,
                 'price' => (float) $product->price,
                 'stock_quantity' => $product->stock_quantity,
                 'brand' => $product->brand,
@@ -130,6 +132,7 @@ class ElasticsearchService
                 'name' => $product->name,
                 'description' => $product->description,
                 'sku' => $product->sku,
+                'category' => $product->category,
                 'price' => (float) $product->price,
                 'stock_quantity' => $product->stock_quantity,
                 'brand' => $product->brand,
@@ -167,7 +170,6 @@ class ElasticsearchService
         $must = [];
         $filter = [];
 
-        // Full-text search query
         if (!empty($query)) {
             $must[] = [
                 'multi_match' => [
@@ -178,15 +180,12 @@ class ElasticsearchService
             ];
         }
 
-        // Always filter active products
         $filter[] = ['term' => ['is_active' => true]];
 
-        // Brand filter
         if (!empty($filters['brand'])) {
             $filter[] = ['term' => ['brand' => $filters['brand']]];
         }
 
-        // Price range filter
         if (isset($filters['minPrice']) || isset($filters['maxPrice'])) {
             $rangeFilter = [];
             if (isset($filters['minPrice'])) {
@@ -198,7 +197,6 @@ class ElasticsearchService
             $filter[] = ['range' => ['price' => $rangeFilter]];
         }
 
-        // In stock filter
         if (isset($filters['inStock']) && $filters['inStock']) {
             $filter[] = ['range' => ['stock_quantity' => ['gt' => 0]]];
         }

@@ -39,17 +39,34 @@ class CheckoutService
             $notes
         ) {
 
-            $product = Product::findOrFail($productId);
+            // Lock product and check stock
+            $product = Product::where('id', $productId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$product) {
+                throw new Error('Product not found');
+            }
+
+            if ($product->stock_quantity < $quantity) {
+                throw new Error(sprintf(
+                    'Insufficient stock. Available: %d, Requested: %d',
+                    $product->stock_quantity,
+                    $quantity
+                ));
+            }
+
+            $product->decrement('stock_quantity', $quantity);
 
             $subtotal = $product->price * $quantity;
-            $tax = $subtotal * 0.20; // örnek KDV
+            $tax = $subtotal * 0.18;
             $total = $subtotal + $tax;
 
             $order = Order::create([
                 'order_number' => Str::uuid(),
                 'user_id' => $userId,
                 'address_id' => $addressId,
-                'status' => OrderStatus::PENDING->value,
+                'status' => OrderStatus::PROCESSING->value,
                 'subtotal' => $subtotal,
                 'tax' => $tax,
                 'total' => $total,
@@ -64,43 +81,11 @@ class CheckoutService
                 'subtotal' => $subtotal,
             ]);
 
+            $order->update(['status' => OrderStatus::COMPLETED->value]);
+            $order->load('items');
             OrderCreated::dispatch($order);
-            return $order;
-        });
-    }
 
-    /**
-     * Payment success callback
-     * Uygulamada webhook / event consumer çalıştırır
-     */
-    public function finalizePayment(Order $order): void
-    {
-        DB::transaction(function () use ($order) {
-            $order->update([
-                'status' => 'paid'
-            ]);
-
-            event(new \App\Events\OrderPaid($order));
-        });
-    }
-
-    /**
-     * Payment failure compensation
-     */
-    public function rollbackStockAndFail(Order $order): void
-    {
-        DB::transaction(function () use ($order) {
-
-            foreach ($order->items as $item) {
-                Product::where('id', $item->product_id)
-                    ->increment('stock_quantity', $item->quantity);
-            }
-
-            $order->update([
-                'status' => 'payment_failed'
-            ]);
-
-            event(new \App\Events\OrderPaymentFailed($order));
+            return $order->fresh(['items', 'address']);
         });
     }
 
@@ -118,7 +103,6 @@ class CheckoutService
         }
 
         return DB::transaction(function () use ($order) {
-            // Restore stock for all items
             foreach ($order->items as $item) {
                 $product = Product::find($item->product_id);
                 if ($product) {
@@ -126,10 +110,8 @@ class CheckoutService
                 }
             }
 
-            // Update order status
             $order->update(['status' => 'cancelled']);
 
-            // Cancel payment if exists
             if ($order->payment && $order->payment->status === 'completed') {
                 $order->payment->update(['status' => 'refunded']);
             }

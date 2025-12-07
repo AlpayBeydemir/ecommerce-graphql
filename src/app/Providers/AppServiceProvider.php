@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Product;
+use App\Observers\ProductObserver;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 
@@ -20,6 +22,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register Product Observer for Elasticsearch auto-indexing
+        Product::observe(ProductObserver::class);
+
         // Configure Passport token lifetimes
         // Note: This app uses Personal Access Tokens (via createToken()), not OAuth2 flow
 
