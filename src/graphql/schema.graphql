@@ -3,14 +3,11 @@ scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date
 
 "Indicates what fields are available at the top level of a query operation."
 type Query {
-    # Auth
-    me: User @auth
+    me: User @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\Profile")
 
-    # Users
     user(id: ID @eq): User @find @guard(with: ["api"])
     users(name: String @where(operator: "like")): [User!]! @paginate(defaultCount: 10) @guard(with: ["api"])
 
-    # Products
     product(id: ID @eq): Product @find
     products(
         name: String @where(operator: "like")
@@ -20,7 +17,6 @@ type Query {
         inStock: Boolean
     ): [Product!]! @paginate(defaultCount: 20)
 
-    # Product Search (will be handled by custom resolver with Elasticsearch)
     searchProducts(
         query: String!
         brand: String
@@ -31,47 +27,33 @@ type Query {
         limit: Int = 20
     ): ProductSearchResult! @field(resolver: "App\\GraphQL\\Queries\\SearchProducts")
 
-    # Addresses
     address(id: ID @eq): Address @find @guard(with: ["api"])
     myAddresses: [Address!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\MyAddresses")
 
-    # Orders
     order(id: ID @eq): Order @find @guard(with: ["api"])
     myOrders(status: OrderStatus): [Order!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\MyOrders")
     orderByNumber(orderNumber: String!): Order @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\OrderByNumber")
-
-    # Payments
-    payment(id: ID @eq): Payment @find @guard(with: ["api"])
 }
 
 type Mutation {
-    # Auth
     register(input: RegisterInput! @spread): AuthPayload! @field(resolver: "App\\GraphQL\\Mutations\\Register")
     login(input: LoginInput! @spread): AuthPayload! @field(resolver: "App\\GraphQL\\Mutations\\Login")
     logout: LogoutResponse! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\Logout")
     refreshToken(input: RefreshTokenInput! @spread): RefreshTokenPayload! @field(resolver: "App\\GraphQL\\Mutations\\RefreshToken")
 
-    # User Profile
     updateProfile(input: UpdateProfileInput! @spread): User! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\UpdateProfile")
 
-    # Addresses
     createAddress(input: CreateAddressInput! @spread): Address! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\CreateAddress")
     updateAddress(id: ID!, input: UpdateAddressInput! @spread): Address! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\UpdateAddress")
     deleteAddress(id: ID!): DeleteResponse! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\DeleteAddress")
     setDefaultAddress(id: ID!): Address! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\SetDefaultAddress")
 
-    # Products (Admin only - you can add @can directive later)
     createProduct(input: CreateProductInput! @spread): Product! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\CreateProduct")
     updateProduct(id: ID!, input: UpdateProductInput! @spread): Product! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\UpdateProduct")
     deleteProduct(id: ID!): DeleteResponse! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\DeleteProduct")
 
-    # Checkout - Buy Now Flow
     buyNow(input: BuyNowInput! @spread): Order! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\BuyNow")
 
-    # Payment
-    processPayment(input: ProcessPaymentInput! @spread): Payment! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\ProcessPayment")
-
-    # Order Management
     cancelOrder(orderId: ID!): Order! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\CancelOrder")
 }
 

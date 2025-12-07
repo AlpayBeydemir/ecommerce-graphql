@@ -114,6 +114,81 @@
 							]
 						}
 					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "graphql",
+							"graphql": {
+								"query": "mutation UpdateProfile($input: UpdateProfileInput!) {\n  updateProfile(input: $input) {\n    id\n    name\n    email\n    created_at\n    updated_at\n  }\n}",
+								"variables": "{\n  \"input\": {\n    \"name\": \"John Updated\"\n  }\n}"
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/graphql",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"graphql"
+							]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "graphql",
+							"graphql": {
+								"query": "mutation Logout {\n  logout {\n    message\n    status\n  }\n}"
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/graphql",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"graphql"
+							]
+						}
+					}
 				}
 			]
 		},
@@ -266,7 +341,7 @@
 							"mode": "graphql",
 							"graphql": {
 								"query": "query SearchProducts($query: String!, $brand: String, $minPrice: Float, $maxPrice: Float, $inStock: Boolean, $page: Int, $limit: Int) {\n  searchProducts(\n    query: $query\n    brand: $brand\n    minPrice: $minPrice\n    maxPrice: $maxPrice\n    inStock: $inStock\n    page: $page\n    limit: $limit\n  ) {\n    data {\n      id\n      name\n      category\n      price\n      stock_quantity\n      brand\n    }\n    total\n    page\n    limit\n  }\n}",
-								"variables": "{\n  \"query\": \"iPhone\",\n  \"inStock\": true,\n  \"page\": 1,\n  \"limit\": 20\n}"
+								"variables": "{\n  \"query\": \"samsung\",\n  \"inStock\": true,\n  \"page\": 1,\n  \"limit\": 20\n}"
 							}
 						},
 						"url": {
@@ -359,6 +434,82 @@
 							]
 						}
 					}
+				},
+				{
+					"name": "Update Address",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "graphql",
+							"graphql": {
+								"query": "mutation UpdateAddress($id: ID!, $input: UpdateAddressInput!) {\n  updateAddress(id: $id, input: $input) {\n    id\n    title\n    full_name\n    phone\n    address_line_1\n    address_line_2\n    city\n    state\n    postal_code\n    country\n    is_default\n  }\n}",
+								"variables": "{\n  \"id\": \"1\",\n  \"input\": {\n    \"title\": \"İş Yeri\",\n    \"phone\": \"+90 555 999 8888\",\n    \"is_default\": false\n  }\n}"
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/graphql",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"graphql"
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Address",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "graphql",
+							"graphql": {
+								"query": "mutation DeleteAddress($id: ID!) {\n  deleteAddress(id: $id) {\n    message\n    success\n  }\n}",
+								"variables": "{\n  \"id\": \"2\"\n}"
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/graphql",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"graphql"
+							]
+						}
+					}
 				}
 			]
 		},
@@ -426,7 +577,7 @@
 						"body": {
 							"mode": "graphql",
 							"graphql": {
-								"query": "query MyOrders {\n  myOrders {\n    id\n    order_number\n    status\n    subtotal\n    tax\n    total\n    items {\n      product_name\n      quantity\n      price\n    }\n    payment {\n      id\n      status\n      transaction_id\n    }\n    created_at\n  }\n}"
+								"query": "query MyOrders {\n  myOrders {\n    id\n    order_number\n    status\n    subtotal\n    tax\n    total\n    items {\n      product_name\n      quantity\n      price\n    }\n    created_at\n  }\n}"
 							}
 						},
 						"url": {
@@ -463,8 +614,8 @@
 						"body": {
 							"mode": "graphql",
 							"graphql": {
-								"query": "query GetOrderByNumber($orderNumber: String!) {\n  orderByNumber(orderNumber: $orderNumber) {\n    id\n    order_number\n    status\n    subtotal\n    tax\n    total\n    notes\n    items {\n      product_name\n      quantity\n      price\n      subtotal\n    }\n    address {\n      full_name\n      phone\n      address_line_1\n      city\n    }\n    payment {\n      status\n      transaction_id\n      paid_at\n    }\n  }\n}",
-								"variables": "{\n  \"orderNumber\": \"ORD-6931CF9D80FEA\"\n}"
+								"query": "query GetOrderByNumber($orderNumber: String!) {\n  orderByNumber(orderNumber: $orderNumber) {\n    id\n    order_number\n    status\n    subtotal\n    tax\n    total\n    notes\n    items {\n      product_name\n      quantity\n      price\n      subtotal\n    }\n    address {\n      full_name\n      phone\n      address_line_1\n      city\n    }\n    created_at\n  }\n}",
+								"variables": "{\n  \"orderNumber\": \"246f7952-64ec-4eb3-8ca0-272a27a051f9\"\n}"
 							}
 						},
 						"url": {
@@ -502,50 +653,7 @@
 							"mode": "graphql",
 							"graphql": {
 								"query": "mutation CancelOrder($orderId: ID!) {\n  cancelOrder(orderId: $orderId) {\n    id\n    order_number\n    status\n  }\n}",
-								"variables": "{\n  \"orderId\": \"1\"\n}"
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/graphql",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"graphql"
-							]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "Payments",
-			"item": [
-				{
-					"name": "Process Payment",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{access_token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "graphql",
-							"graphql": {
-								"query": "mutation ProcessPayment($input: ProcessPaymentInput!) {\n  processPayment(input: $input) {\n    id\n    transaction_id\n    status\n    amount\n    paid_at\n    order {\n      id\n      order_number\n      status\n    }\n  }\n}",
-								"variables": "{\n  \"input\": {\n    \"order_id\": 1,\n    \"payment_method\": \"credit_card\"\n  }\n}"
+								"variables": "{\n  \"orderId\": \"eb156eae-182b-4eb8-ae84-dcdf9ed147c3\"\n}"
 							}
 						},
 						"url": {

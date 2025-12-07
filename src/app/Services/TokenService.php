@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Laravel\Passport\Token;
+use Laravel\Passport\AccessToken;
 use Laravel\Passport\RefreshToken;
 use Illuminate\Support\Facades\DB;
 use GraphQL\Error\Error;
@@ -140,10 +141,10 @@ class TokenService
     /**
      * Revoke a specific access token and its refresh token.
      *
-     * @param Token $token The access token to revoke
+     * @param Token|AccessToken $token The access token to revoke
      * @return void
      */
-    public function revokeToken(Token $token): void
+    public function revokeToken(Token|AccessToken $token): void
     {
         DB::transaction(function () use ($token) {
             $token->revoke();
