@@ -31,6 +31,7 @@ class BuyNow
             productId: $args['product_id'],
             quantity: $args['quantity'],
             addressId: $args['address_id'],
+            paymentMethod: $args['payment_method'],
             notes: $args['notes'] ?? null,
         );
     }

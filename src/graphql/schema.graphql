@@ -280,6 +280,7 @@ input BuyNowInput {
     product_id: ID! @rules(apply: ["required", "exists:products,id"])
     quantity: Int! @rules(apply: ["required", "integer", "min:1"])
     address_id: ID! @rules(apply: ["required", "exists:addresses,id"])
+    payment_method: String! @rules(apply: ["required", "string", "in:credit_card,debit_card,bank_transfer"])
     notes: String
 }
 

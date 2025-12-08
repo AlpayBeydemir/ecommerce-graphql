@@ -12,6 +12,10 @@ use Illuminate\Support\Str;
 
 class CheckoutService
 {
+    public function __construct(
+        protected PaymentService $paymentService
+    ) {}
+
     /**
      * Process a "Buy Now" checkout
      *
@@ -19,6 +23,7 @@ class CheckoutService
      * @param int $productId
      * @param int $quantity
      * @param int $addressId
+     * @param string $paymentMethod
      * @param string|null $notes
      * @return Order
      * @throws Error
@@ -28,6 +33,7 @@ class CheckoutService
         int $productId,
         int $quantity,
         int $addressId,
+        string $paymentMethod,
         ?string $notes
     ): Order {
 
@@ -36,10 +42,10 @@ class CheckoutService
             $productId,
             $quantity,
             $addressId,
+            $paymentMethod,
             $notes
         ) {
 
-            // Lock product and check stock
             $product = Product::where('id', $productId)
                 ->lockForUpdate()
                 ->first();
@@ -66,7 +72,7 @@ class CheckoutService
                 'order_number' => Str::uuid(),
                 'user_id' => $userId,
                 'address_id' => $addressId,
-                'status' => OrderStatus::PROCESSING->value,
+                'status' => OrderStatus::PENDING->value,
                 'subtotal' => $subtotal,
                 'tax' => $tax,
                 'total' => $total,
@@ -81,11 +87,23 @@ class CheckoutService
                 'subtotal' => $subtotal,
             ]);
 
-            $order->update(['status' => OrderStatus::COMPLETED->value]);
-            $order->load('items');
-            OrderCreated::dispatch($order);
+            // Process payment
+            $payment = $this->paymentService->processPayment($order, $paymentMethod);
 
-            return $order->fresh(['items', 'address']);
+            // If payment failed, restore stock
+            if ($payment->status !== 'completed') {
+                $product->increment('stock_quantity', $quantity);
+            }
+
+            // Load relationships and return order (regardless of payment status)
+            $order->load(['items', 'address', 'payment']);
+
+            // Dispatch event only for successful orders
+            if ($payment->status === 'completed') {
+                OrderCreated::dispatch($order);
+            }
+
+            return $order;
         });
     }
 

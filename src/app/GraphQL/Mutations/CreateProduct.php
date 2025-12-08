@@ -8,9 +8,6 @@ class CreateProduct
 {
     public function __invoke($rootValue, array $args)
     {
-        // TODO: Dispatch job to index product in Elasticsearch
-        // dispatch(new IndexProduct($product));
-
         return Product::create([
             'name' => $args['name'],
             'description' => $args['description'] ?? null,

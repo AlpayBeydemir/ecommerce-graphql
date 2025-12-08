@@ -15,11 +15,7 @@ class DeleteProduct
             throw new Error('Product not found');
         }
 
-        // Soft delete
         $product->delete();
-
-        // TODO: Dispatch job to remove product from Elasticsearch
-        // dispatch(new RemoveProductIndex($product));
 
         return [
             'message' => 'Product deleted successfully',

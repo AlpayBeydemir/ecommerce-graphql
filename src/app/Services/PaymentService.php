@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use GraphQL\Error\Error;
+use Random\RandomException;
 
 class PaymentService
 {
@@ -28,14 +29,12 @@ class PaymentService
         }
 
         return DB::transaction(function () use ($order, $paymentMethod) {
-            // Check if payment already exists
             $existingPayment = Payment::where('order_id', $order->id)->first();
 
             if ($existingPayment && $existingPayment->status === 'completed') {
                 throw new Error('Payment already processed for this order');
             }
 
-            // Create or update payment record
             $payment = $existingPayment ?: new Payment();
             $payment->order_id = $order->id;
             $payment->payment_method = $paymentMethod;
@@ -43,27 +42,21 @@ class PaymentService
             $payment->currency = 'TRY';
             $payment->status = 'pending';
 
-            // Simulate payment gateway call
             $gatewayResponse = $this->callFakePaymentGateway($order, $paymentMethod);
 
             if ($gatewayResponse['success']) {
-                // Payment successful
                 $payment->status = 'completed';
+                $payment->transaction_id = $gatewayResponse['transaction_id'];
                 $payment->paid_at = now();
                 $payment->response_data = json_encode($gatewayResponse);
 
-                // Update order status
-                $order->update(['status' => 'processing']);
-
-                // TODO: Dispatch job to process order fulfillment
-                // dispatch(new ProcessOrderFulfillment($order));
+                $order->update(['status' => 'completed']);
 
             } else {
-                // Payment failed
                 $payment->status = 'failed';
+                $payment->transaction_id = 'FAILED-' . uniqid();
                 $payment->response_data = json_encode($gatewayResponse);
 
-                // Update order status
                 $order->update(['status' => 'failed']);
             }
 
@@ -80,16 +73,16 @@ class PaymentService
      * @param Order $order
      * @param string $paymentMethod
      * @return array
+     * @throws RandomException
      */
     protected function callFakePaymentGateway(Order $order, string $paymentMethod): array
     {
-        // Simulate 90% success rate
-        $success = rand(1, 100) <= 90;
+        $success = random_int(1, 100) <= 90;
 
         if ($success) {
             return [
                 'success' => true,
-                'transaction_id' => 'FKG-' . strtoupper(uniqid()),
+                'transaction_id' => 'FKG-' . strtoupper(uniqid('', true)),
                 'message' => 'Payment processed successfully',
                 'gateway' => 'FakeGateway',
                 'payment_method' => $paymentMethod,
@@ -97,49 +90,14 @@ class PaymentService
                 'currency' => 'TRY',
                 'timestamp' => now()->toIso8601String(),
             ];
-        } else {
-            return [
-                'success' => false,
-                'error_code' => 'INSUFFICIENT_FUNDS',
-                'message' => 'Payment declined - Insufficient funds',
-                'gateway' => 'FakeGateway',
-                'timestamp' => now()->toIso8601String(),
-            ];
-        }
-    }
-
-    /**
-     * Refund a payment
-     *
-     * @param Payment $payment
-     * @return Payment
-     * @throws Error
-     */
-    public function refundPayment(Payment $payment): Payment
-    {
-        if ($payment->status !== 'completed') {
-            throw new Error('Cannot refund payment that is not completed');
         }
 
-        return DB::transaction(function () use ($payment) {
-            // Simulate refund gateway call
-            $gatewayResponse = [
-                'success' => true,
-                'refund_id' => 'RFD-' . strtoupper(uniqid()),
-                'message' => 'Refund processed successfully',
-                'amount' => $payment->amount,
-                'timestamp' => now()->toIso8601String(),
-            ];
-
-            $payment->update([
-                'status' => 'refunded',
-                'response_data' => json_encode(array_merge(
-                    json_decode($payment->response_data, true) ?? [],
-                    ['refund' => $gatewayResponse]
-                )),
-            ]);
-
-            return $payment->fresh();
-        });
+        return [
+            'success' => false,
+            'error_code' => 'INSUFFICIENT_FUNDS',
+            'message' => 'Payment declined - Insufficient funds',
+            'gateway' => 'FakeGateway',
+            'timestamp' => now()->toIso8601String(),
+        ];
     }
 }
