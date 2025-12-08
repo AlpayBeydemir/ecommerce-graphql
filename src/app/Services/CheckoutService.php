@@ -87,18 +87,14 @@ class CheckoutService
                 'subtotal' => $subtotal,
             ]);
 
-            // Process payment
             $payment = $this->paymentService->processPayment($order, $paymentMethod);
 
-            // If payment failed, restore stock
             if ($payment->status !== 'completed') {
                 $product->increment('stock_quantity', $quantity);
             }
 
-            // Load relationships and return order (regardless of payment status)
             $order->load(['items', 'address', 'payment']);
 
-            // Dispatch event only for successful orders
             if ($payment->status === 'completed') {
                 OrderCreated::dispatch($order);
             }

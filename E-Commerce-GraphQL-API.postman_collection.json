@@ -539,8 +539,8 @@
 						"body": {
 							"mode": "graphql",
 							"graphql": {
-								"query": "mutation BuyNow($input: BuyNowInput!) {\n  buyNow(input: $input) {\n    id\n    order_number\n    status\n    subtotal\n    tax\n    total\n    notes\n    items {\n      id\n      product_name\n      quantity\n      price\n      subtotal\n    }\n    address {\n      id\n      title\n      full_name\n    }\n  }\n}",
-								"variables": "{\n  \"input\": {\n    \"product_id\": 1,\n    \"quantity\": 1,\n    \"address_id\": 1,\n    \"notes\": \"Lütfen kapıya bırakın\"\n  }\n}"
+								"query": "mutation BuyNow($input: BuyNowInput!) {\n  buyNow(input: $input) {\n    id\n    order_number\n    status\n    subtotal\n    tax\n    total\n    notes\n    items {\n      id\n      product_name\n      quantity\n      price\n      subtotal\n    }\n    address {\n      id\n      title\n      full_name\n    }\n    payment {\n      id\n      transaction_id\n      status\n      amount\n      payment_method\n      paid_at\n    }\n  }\n}",
+								"variables": "{\n  \"input\": {\n    \"product_id\": 1,\n    \"quantity\": 1,\n    \"address_id\": 1,\n    \"payment_method\": \"credit_card\",\n    \"notes\": \"Lütfen kapıya bırakın\"\n  }\n}"
 							}
 						},
 						"url": {
@@ -577,7 +577,7 @@
 						"body": {
 							"mode": "graphql",
 							"graphql": {
-								"query": "query MyOrders {\n  myOrders {\n    id\n    order_number\n    status\n    subtotal\n    tax\n    total\n    items {\n      product_name\n      quantity\n      price\n    }\n    created_at\n  }\n}"
+								"query": "query MyOrders {\n  myOrders {\n    id\n    order_number\n    status\n    subtotal\n    tax\n    total\n    items {\n      product_name\n      quantity\n      price\n    }\n    payment {\n      transaction_id\n      status\n      amount\n      payment_method\n    }\n    created_at\n  }\n}"
 							}
 						},
 						"url": {
@@ -614,7 +614,7 @@
 						"body": {
 							"mode": "graphql",
 							"graphql": {
-								"query": "query GetOrderByNumber($orderNumber: String!) {\n  orderByNumber(orderNumber: $orderNumber) {\n    id\n    order_number\n    status\n    subtotal\n    tax\n    total\n    notes\n    items {\n      product_name\n      quantity\n      price\n      subtotal\n    }\n    address {\n      full_name\n      phone\n      address_line_1\n      city\n    }\n    created_at\n  }\n}",
+								"query": "query GetOrderByNumber($orderNumber: String!) {\n  orderByNumber(orderNumber: $orderNumber) {\n    id\n    order_number\n    status\n    subtotal\n    tax\n    total\n    notes\n    items {\n      product_name\n      quantity\n      price\n      subtotal\n    }\n    address {\n      full_name\n      phone\n      address_line_1\n      city\n    }\n    payment {\n      transaction_id\n      status\n      amount\n      payment_method\n      paid_at\n    }\n    created_at\n  }\n}",
 								"variables": "{\n  \"orderNumber\": \"246f7952-64ec-4eb3-8ca0-272a27a051f9\"\n}"
 							}
 						},
